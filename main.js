@@ -13,12 +13,12 @@ function init() {
   canvas.style.border = "1px solid black";
   ctx = canvas.getContext("2d");
 
-  world = rf.World.newRandomWorld(5,5);
+  world = rf.World.newRandomWorld(7,7);
 
   requestAnimationFrame(update);
 }
 
-fps = 10
+fps = 1;
 function update() {
   setTimeout(
     function() {
@@ -29,7 +29,6 @@ function update() {
     1000 / fps
   );
 }
-
 
 init();
 

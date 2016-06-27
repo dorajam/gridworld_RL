@@ -14,12 +14,12 @@ function init() {
   canvas.style.border = "1px solid black";
   ctx = canvas.getContext("2d");
 
-  world = rf.World.newRandomWorld(5,5);
+  world = rf.World.newRandomWorld(7,7);
 
   requestAnimationFrame(update);
 }
 
-fps = 10
+fps = 1;
 function update() {
   setTimeout(
     function() {
@@ -30,7 +30,6 @@ function update() {
     1000 / fps
   );
 }
-
 
 init();
 
@@ -48,6 +47,74 @@ var State = function(world, row, col) {
 }
 
 var p = State.prototype;
+
+// p.getValueColor = function() {
+//   if (this.value == 0) {
+//     return 'rgba(0,0,0,0)';
+//   }
+
+//   var neighbors = this.getNeighbors();
+//   var highest = neighbors[0];
+//   for (var i = 0; i < this.world.height; i++) {
+//     for (var j =0; j < this.world.width; j++) {
+//       var state = this.world.states[i][j];
+//       if (state.value > highest.value) {
+//         highest = state;
+//       }
+//     }
+//   }
+//   var ratio = Math.abs(this.value / highest.value);
+//   var colors = blendColors(ratio, this.value);
+
+//   return colors;
+// }
+
+p.getValueColor = function() {
+	// TODO this function needs serious refactoring, see todos below
+
+	// TODO this color processing code should be somewhere else
+	var red = {r: 230, g: 83, b: 108, a: 1};
+	var green = {r: 150, g: 250, b: 10, a: 1};
+	var white = {r: 255, g: 255, b: 255, a: 1};
+	var blendColors = function(a, b, t) {
+		return {
+			r: Math.floor(a.r * (1 - t) + b.r * t),
+			g: Math.floor(a.g * (1 - t) + b.g * t),
+			b: Math.floor(a.b * (1 - t) + b.b * t),
+			a: a.a * (1 - t) + b.a * t
+		};
+	}
+	var rgbaToString = function(rgba) {
+		return "rgba(" +
+			rgba.r + ", " +
+			rgba.g + ", " +
+			rgba.b + ", " +
+			rgba.a +
+		")";
+	}
+
+	// find the state with the best absolute value
+	// TODO this is inefficient, this should not be computed again for each state
+	var world = this.world;
+	var bestState = world.states[0][0];
+	for (var i = 0; i < world.height; i++) {
+		for (var j = 0; j < world.width; j++) {
+			var state = world.states[i][j];
+			if (Math.abs(state.value) > Math.abs(bestState.value)) {
+				bestState = state;
+			}
+		}
+	}
+
+	var t;
+	if (bestState.value == 0) t = 0;
+	else t = Math.abs(this.value / bestState.value);
+	var targetColor;
+	if (this.value < 0) targetColor = red;
+	else targetColor = green;
+
+	return rgbaToString(blendColors(white, targetColor, t));
+}
 
 p.render = function(ctx) {
   var size = 80;
@@ -68,13 +135,6 @@ p.render = function(ctx) {
   ctx.stroke();
 }
 
-p.getValueColor = function() {
-  
-
-  return 'rgba(134,180,234,1)';
-}
-
-
 p.getNeighbors = function() {
   var neighbors = [];
   var i = this.row;
@@ -93,6 +153,16 @@ p.getNeighbors = function() {
   }
   return neighbors;
 }
+
+
+
+// helper functions
+// function blendColors(ratio, value) {
+//   if (value < 0) {
+//     return 'rgba(' + Math.round(230*ratio) + ',' + Math.round(83*(1-ratio)) + ',' + Math.round(108*(1-ratio)) + ',1)';
+//   } else {
+//     return 'rgba(' + Math.round(150*(1-ratio)) + ','+ Math.round(250*ratio) + ',' + Math.round(10*(1-ratio)) + ',1)';
+//   } }
 
 module.exports = State;
 
@@ -160,7 +230,9 @@ p.valueIteration = function() {
       }
       }
       state.value = state.reward + gamma * bestNeighbor.value;
-    }}}
+    }
+  }
+}
 
 
 module.exports = World;
